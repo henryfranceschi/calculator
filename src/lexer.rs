@@ -35,6 +35,7 @@ impl<'a> Lexer<'a> {
                 // Consume fractional part.
                 if self.cursor.peek_first() == '.' && self.cursor.peek_second().is_ascii_digit() {
                     self.cursor.advance();
+                    self.cursor.advance_while(|c| c.is_ascii_digit());
                 }
 
                 TokenKind::Number
