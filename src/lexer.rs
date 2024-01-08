@@ -18,7 +18,7 @@ impl<'a> Lexer<'a> {
         Self { cursor }
     }
 
-    pub fn next_token(&mut self) -> Result<Token<'a>, LexError> {
+    pub fn next_token(&mut self) -> Result<Token<'a>, LexError<'a>> {
         self.cursor.advance_while(|c| c.is_ascii_whitespace());
         self.cursor.reset_start_index();
 
