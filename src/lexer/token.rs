@@ -10,6 +10,8 @@ pub struct Token<'a> {
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TokenKind {
+    LParen,
+    RParen,
     Number,
     Plus,
     Minus,
