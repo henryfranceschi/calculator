@@ -56,6 +56,20 @@ impl Expr {
     pub fn span(&self) -> Span {
         self.0.span
     }
+
+    pub fn unary(operator: UnOp, operand: Expr) -> Self {
+        Self::new(
+            Span::new(operator.span().start(), operand.span().end()),
+            ExprKind::Unary(operator, Box::new(operand)),
+        )
+    }
+
+    pub fn binary(operator: BinOp, operand_1: Expr, operand_2: Expr) -> Self {
+        Self::new(
+            Span::new(operand_1.span().start(), operand_2.span().end()),
+            ExprKind::Binary(operator, Box::new(operand_1), Box::new(operand_2)),
+        )
+    }
 }
 
 pub enum ExprKind {
