@@ -17,6 +17,10 @@ impl UnOp {
     pub fn new(span: Span, kind: UnOpKind) -> Self {
         Self(Spanned::new(kind, span))
     }
+
+    pub fn span(&self) -> Span {
+        self.0.span
+    }
 }
 pub enum UnOpKind {
     Neg,
@@ -27,6 +31,10 @@ pub struct BinOp(Spanned<BinOpKind>);
 impl BinOp {
     pub fn new(span: Span, kind: BinOpKind) -> Self {
         Self(Spanned::new(kind, span))
+    }
+
+    pub fn span(&self) -> Span {
+        self.0.span
     }
 }
 
@@ -44,6 +52,10 @@ impl Expr {
     pub fn new(span: Span, kind: ExprKind) -> Self {
         Self(Spanned::new(kind, span))
     }
+
+    pub fn span(&self) -> Span {
+        self.0.span
+    }
 }
 
 pub enum ExprKind {
@@ -51,4 +63,3 @@ pub enum ExprKind {
     Unary(UnOp, Box<Expr>),
     Binary(BinOp, Box<Expr>, Box<Expr>),
 }
-
