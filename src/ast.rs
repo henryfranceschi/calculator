@@ -23,6 +23,10 @@ impl UnOp {
     pub fn span(&self) -> Span {
         self.0.span
     }
+
+    pub fn kind(&self) -> &UnOpKind {
+        &self.0.node
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -40,6 +44,10 @@ impl BinOp {
 
     pub fn span(&self) -> Span {
         self.0.span
+    }
+
+    pub fn kind(&self) -> &BinOpKind {
+        &self.0.node
     }
 }
 
@@ -62,6 +70,10 @@ impl Expr {
 
     pub fn span(&self) -> Span {
         self.0.span
+    }
+
+    pub fn kind(&self) -> &ExprKind {
+        &self.0.node
     }
 
     pub fn unary(operator: UnOp, operand: Expr) -> Self {
