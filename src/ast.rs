@@ -1,5 +1,6 @@
 use crate::lexer::span::Span;
 
+#[derive(Clone, Copy)]
 pub struct Spanned<T> {
     pub node: T,
     pub span: Span,
@@ -11,6 +12,7 @@ impl<T> Spanned<T> {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct UnOp(Spanned<UnOpKind>);
 
 impl UnOp {
@@ -22,10 +24,13 @@ impl UnOp {
         self.0.span
     }
 }
+
+#[derive(Clone, Copy)]
 pub enum UnOpKind {
     Neg,
 }
 
+#[derive(Clone, Copy)]
 pub struct BinOp(Spanned<BinOpKind>);
 
 impl BinOp {
@@ -38,6 +43,7 @@ impl BinOp {
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum BinOpKind {
     Add,
     Sub,
@@ -46,6 +52,7 @@ pub enum BinOpKind {
     Mod,
 }
 
+#[derive(Clone)]
 pub struct Expr(Spanned<ExprKind>);
 
 impl Expr {
@@ -72,6 +79,7 @@ impl Expr {
     }
 }
 
+#[derive(Clone)]
 pub enum ExprKind {
     Number(f64),
     Unary(UnOp, Box<Expr>),
