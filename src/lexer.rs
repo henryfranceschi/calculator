@@ -14,8 +14,8 @@ pub struct Lexer<'a> {
 }
 
 impl<'a> Lexer<'a> {
-    pub fn new(cursor: Cursor<'a>) -> Self {
-        Self { cursor }
+    pub fn new(source: &'a str) -> Self {
+        Self { cursor: Cursor::new(source) }
     }
 
     pub fn next_token(&mut self) -> Result<Token<'a>, LexError<'a>> {
@@ -81,15 +81,15 @@ enum LexErrorKind {
 mod test {
     use crate::lexer::token::TokenKind;
 
-    use super::{Lexer, cursor::Cursor, LexError};
+    use super::{Lexer, LexError};
 
     #[test]
     fn number() -> Result<(), LexError<'static>> {
-        let mut lexer = Lexer::new(Cursor::new("3"));
+        let mut lexer = Lexer::new("3");
         assert_eq!(lexer.next_token()?.kind, TokenKind::Number);
         assert_eq!(lexer.next_token()?.kind, TokenKind::Eof);
 
-        let mut lexer = Lexer::new(Cursor::new("3.14"));
+        let mut lexer = Lexer::new("3.14");
         assert_eq!(lexer.next_token()?.kind, TokenKind::Number);
         assert_eq!(lexer.next_token()?.kind, TokenKind::Eof);
 
@@ -98,7 +98,7 @@ mod test {
 
     #[test]
     fn unexpected() -> Result<(), LexError<'static>> {
-        let mut lexer = Lexer::new(Cursor::new("10 + #"));
+        let mut lexer = Lexer::new("10 + #");
         assert_eq!(lexer.next_token()?.kind, TokenKind::Number);
         assert_eq!(lexer.next_token()?.kind, TokenKind::Plus);
         assert!(lexer.next_token().is_err());
