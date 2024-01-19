@@ -21,27 +21,27 @@ impl Span {
     pub fn end(&self) -> usize {
         self.end
     }
-}
 
-pub fn slice<'a>(source: &'a str, span: &Span) -> &'a str {
-    &source[span.start..span.end]
-}
+    pub fn slice(self, source: &str) -> &str {
+        &source[self.start..self.end]
+    }
 
-/// Returns the number of the line on which the span begins.
-pub fn starting_line_number(source: &str, span: &Span) -> usize {
-    source[..span.start]
-        .chars()
-        .filter(|c| *c == '\n')
-        .count()
-        .add(1)
-}
+    /// Returns the number of the line on which the span begins.
+    pub fn starting_line_number(self, source: &str) -> usize {
+        source[..self.start]
+            .chars()
+            .filter(|c| *c == '\n')
+            .count()
+            .add(1)
+    }
 
-/// Returns the number of the column on which the span begins.
-pub fn starting_column_number(source: &str, span: &Span) -> usize {
-    source[..span.start]
-        .chars()
-        .rev()
-        .take_while(|c| *c != '\n')
-        .count()
-        .add(1)
+    /// Returns the number of the column on which the span begins.
+    pub fn starting_column_number(self, source: &str) -> usize {
+        source[..self.start]
+            .chars()
+            .rev()
+            .take_while(|c| *c != '\n')
+            .count()
+            .add(1)
+    }
 }
