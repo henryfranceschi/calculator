@@ -38,7 +38,7 @@ impl<'a> Parser<'a> {
         } else {
             Err(ParseError {
                 span: self.current.span,
-                kind: ParseErrorKind::Expected(kind),
+                message: format!("expected {:?}", kind),
             })
         }
     }
@@ -63,14 +63,20 @@ impl<'a> Parser<'a> {
                 expr
             }
             _ => {
-                let op = prefix_op(&self.previous)?;
-                let (_, r_bp) = prefix_binding_power(&op);
-                Expr::unary(op, self.expr(r_bp)?)
+                if let Some(op) = prefix_op(&self.previous) {
+                    let (_, r_bp) = prefix_binding_power(&op);
+                    Expr::unary(op, self.expr(r_bp)?)
+                } else {
+                    return Err(ParseError {
+                        span: self.current.span,
+                        message: "expected expression".to_owned(),
+                    });
+                }
             }
         };
 
         loop {
-            if let Ok(op) = infix_op(&self.current) {
+            if let Some(op) = infix_op(&self.current) {
                 let (l_bp, r_bp) = infix_binding_power(&op);
                 if l_bp < min_bp {
                     break;
@@ -98,36 +104,26 @@ fn report_errs_until_ok<'a>(lexer: &mut Lexer<'a>) -> Token<'a> {
     }
 }
 
-fn prefix_op(token: &Token) -> Result<UnOp, ParseError> {
+fn prefix_op(token: &Token) -> Option<UnOp> {
     let unop = match token.kind {
         TokenKind::Minus => UnOp::new(token.span, UnOpKind::Neg),
-        _ => {
-            return Err(ParseError {
-                span: token.span,
-                kind: ParseErrorKind::Unexpected,
-            })
-        }
+        _ => return None,
     };
 
-    Ok(unop)
+    Some(unop)
 }
 
-fn infix_op(token: &Token) -> Result<BinOp, ParseError> {
+fn infix_op(token: &Token) -> Option<BinOp> {
     let kind = match token.kind {
         TokenKind::Plus => BinOpKind::Add,
         TokenKind::Minus => BinOpKind::Sub,
         TokenKind::Star => BinOpKind::Mul,
         TokenKind::Slash => BinOpKind::Div,
         TokenKind::Percent => BinOpKind::Mod,
-        _ => {
-            return Err(ParseError {
-                span: token.span,
-                kind: ParseErrorKind::Unexpected,
-            })
-        }
+        _ => return None,
     };
 
-    Ok(BinOp::new(token.span, kind))
+    Some(BinOp::new(token.span, kind))
 }
 
 fn prefix_binding_power(unop: &UnOp) -> ((), u8) {
@@ -143,10 +139,10 @@ fn infix_binding_power(binop: &BinOp) -> (u8, u8) {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct ParseError {
     span: Span,
-    kind: ParseErrorKind,
+    message: String,
 }
 
 impl ParseError {
@@ -154,13 +150,7 @@ impl ParseError {
         self.span
     }
 
-    pub fn kind(&self) -> ParseErrorKind {
-        self.kind
+    pub fn message(&self) -> &str {
+        &self.message
     }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum ParseErrorKind {
-    Unexpected,
-    Expected(TokenKind),
 }
