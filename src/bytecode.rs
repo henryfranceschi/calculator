@@ -8,6 +8,24 @@ pub enum Opcode {
     Negate,
 }
 
+impl TryFrom<u8> for Opcode {
+    type Error = ();
+
+    fn try_from(value: u8) -> Result<Self, ()> {
+        let opcode = match value {
+            0 => Self::Constant,
+            1 => Self::Add,
+            2 => Self::Subtract,
+            3 => Self::Multiply,
+            4 => Self::Divide,
+            5 => Self::Negate,
+            _ => return Err(()),
+        };
+
+        Ok(opcode)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Bytecode {
     code: Vec<u8>,
@@ -17,6 +35,10 @@ pub struct Bytecode {
 impl Bytecode {
     pub fn write_byte(&mut self, byte: u8) {
         self.code.push(byte);
+    }
+
+    pub fn write_opcode(&mut self, opcode: Opcode) {
+        self.code.push(opcode as u8);
     }
 
     pub fn add_constant(&mut self, value: f64) -> usize {
