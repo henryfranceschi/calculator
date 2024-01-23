@@ -1,6 +1,7 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Opcode {
     Constant,
+    Return,
     Add,
     Subtract,
     Multiply,
