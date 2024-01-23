@@ -50,4 +50,14 @@ impl Bytecode {
 
         next_idx
     }
+
+    pub fn constant(&mut self, idx: u8) -> f64 {
+        self.constants[idx as usize]
+    }
+}
+
+impl AsRef<[u8]> for Bytecode {
+    fn as_ref(&self) -> &[u8] {
+        self.code.as_ref()
+    }
 }
