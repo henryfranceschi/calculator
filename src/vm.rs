@@ -13,7 +13,7 @@ impl Vm {
             match self
                 .read_byte()
                 .try_into()
-                .map_err(|_| VmError::InvalidBytecode)?
+                .map_err(|_| VmError::InvalidOpcode)?
             {
                 Opcode::Add => {
                     let b = self.pop()?;
@@ -67,11 +67,12 @@ impl Vm {
     }
 
     fn pop(&mut self) -> Result<f64, VmError> {
-        self.stack.pop().ok_or(VmError::InvalidBytecode)
+        self.stack.pop().ok_or(VmError::MissingOperand)
     }
 }
 
 #[derive(Debug, Clone, Copy)]
 pub enum VmError {
-    InvalidBytecode,
+    MissingOperand,
+    InvalidOpcode,
 }
