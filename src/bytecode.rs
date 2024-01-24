@@ -15,11 +15,12 @@ impl TryFrom<u8> for Opcode {
     fn try_from(value: u8) -> Result<Self, ()> {
         let opcode = match value {
             0 => Self::Constant,
-            1 => Self::Add,
-            2 => Self::Subtract,
-            3 => Self::Multiply,
-            4 => Self::Divide,
-            5 => Self::Negate,
+            1 => Self::Return,
+            2 => Self::Add,
+            3 => Self::Subtract,
+            4 => Self::Multiply,
+            5 => Self::Divide,
+            6 => Self::Negate,
             _ => return Err(()),
         };
 
