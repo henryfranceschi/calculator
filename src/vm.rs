@@ -8,6 +8,14 @@ pub struct Vm {
 }
 
 impl Vm {
+    pub fn new(bytecode: Bytecode) -> Self {
+        Self {
+            bytecode,
+            ip: 0,
+            stack: vec![],
+        }
+    }
+
     pub fn run(&mut self) -> Result<f64, VmError> {
         let value = loop {
             match self
