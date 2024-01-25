@@ -45,15 +45,12 @@ impl Bytecode {
 
     pub fn add_constant(&mut self, value: f64) -> usize {
         let next_idx = self.constants.len();
-        assert!(next_idx <= u8::MAX.into());
-
         self.constants.push(value);
-
         next_idx
     }
 
-    pub fn constant(&mut self, idx: u8) -> f64 {
-        self.constants[idx as usize]
+    pub fn constant<T: Into<usize>>(&self, idx: T) -> f64 {
+        self.constants[idx.into()]
     }
 }
 
