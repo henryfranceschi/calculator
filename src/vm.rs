@@ -43,6 +43,11 @@ impl Vm {
                     let a = self.pop()?;
                     self.push(a / b)?;
                 }
+                Opcode::Remainder => {
+                    let b = self.pop()?;
+                    let a = self.pop()?;
+                    self.push(a % b)?;
+                }
                 Opcode::Negate => {
                     let a = self.pop()?;
                     self.push(-a)?;

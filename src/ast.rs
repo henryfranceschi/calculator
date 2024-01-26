@@ -57,7 +57,7 @@ pub enum BinOpKind {
     Sub,
     Mul,
     Div,
-    Mod,
+    Rem,
 }
 
 #[derive(Debug, Clone)]

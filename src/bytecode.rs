@@ -6,6 +6,7 @@ pub enum Opcode {
     Subtract,
     Multiply,
     Divide,
+    Remainder,
     Negate,
 }
 
@@ -20,7 +21,8 @@ impl TryFrom<u8> for Opcode {
             3 => Self::Subtract,
             4 => Self::Multiply,
             5 => Self::Divide,
-            6 => Self::Negate,
+            6 => Self::Remainder,
+            7 => Self::Negate,
             _ => return Err(()),
         };
 

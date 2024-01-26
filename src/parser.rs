@@ -119,7 +119,7 @@ fn infix_op(token: &Token) -> Option<BinOp> {
         TokenKind::Minus => BinOpKind::Sub,
         TokenKind::Star => BinOpKind::Mul,
         TokenKind::Slash => BinOpKind::Div,
-        TokenKind::Percent => BinOpKind::Mod,
+        TokenKind::Percent => BinOpKind::Rem,
         _ => return None,
     };
 
@@ -135,7 +135,7 @@ fn prefix_binding_power(unop: &UnOp) -> ((), u8) {
 fn infix_binding_power(binop: &BinOp) -> (u8, u8) {
     match binop.kind() {
         BinOpKind::Add | BinOpKind::Sub => (1, 2),
-        BinOpKind::Mul | BinOpKind::Div | BinOpKind::Mod => (3, 4),
+        BinOpKind::Mul | BinOpKind::Div | BinOpKind::Rem => (3, 4),
     }
 }
 
