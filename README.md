@@ -1,2 +1,2 @@
 # Calculator
-Implemented with a pratt parser, and a stack based virtual machine.
+Implemented with a Pratt parser, and a stack based virtual machine.
