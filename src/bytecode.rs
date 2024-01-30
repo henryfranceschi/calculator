@@ -30,7 +30,7 @@ impl TryFrom<u8> for Opcode {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct Bytecode {
     code: Vec<u8>,
     constants: Vec<f64>,
