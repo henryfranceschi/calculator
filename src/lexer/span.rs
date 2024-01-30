@@ -14,6 +14,13 @@ impl Span {
         Self { start, end }
     }
 
+    pub fn between(start: Span, end: Span) -> Span {
+        Self {
+            start: start.start,
+            end: end.end,
+        }
+    }
+
     pub fn start(&self) -> usize {
         self.start
     }

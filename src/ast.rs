@@ -78,14 +78,14 @@ impl Expr {
 
     pub fn unary(operator: UnOp, operand: Expr) -> Self {
         Self::new(
-            Span::new(operator.span().start(), operand.span().end()),
+            Span::between(operator.span(), operand.span()),
             ExprKind::Unary(operator, Box::new(operand)),
         )
     }
 
     pub fn binary(operator: BinOp, operand_1: Expr, operand_2: Expr) -> Self {
         Self::new(
-            Span::new(operand_1.span().start(), operand_2.span().end()),
+            Span::between(operand_1.span(), operand_2.span()),
             ExprKind::Binary(operator, Box::new(operand_1), Box::new(operand_2)),
         )
     }
