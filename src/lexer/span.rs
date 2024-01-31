@@ -29,6 +29,14 @@ impl Span {
         self.end
     }
 
+    pub fn len(&self) -> usize {
+        self.end - self.start
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     pub fn slice(self, source: &str) -> &str {
         &source[self.start..self.end]
     }
