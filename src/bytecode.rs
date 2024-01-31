@@ -13,7 +13,7 @@ pub enum Opcode {
 impl TryFrom<u8> for Opcode {
     type Error = ();
 
-    fn try_from(value: u8) -> Result<Self, ()> {
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
         let opcode = match value {
             0 => Self::Constant,
             1 => Self::Return,
