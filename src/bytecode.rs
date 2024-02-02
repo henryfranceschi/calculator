@@ -56,6 +56,29 @@ impl Bytecode {
     }
 }
 
+impl Display for Bytecode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let mut it = self.code.iter();
+        while let Some(&byte) = it.next() {
+            let op: Opcode = byte.try_into().expect("invalid opcode");
+            write!(f, "{:?}", op)?;
+
+            // Print operands
+            match op {
+                Opcode::Constant => {
+                    writeln!(f, " {:02X}", it.next().expect("expected operand"))?;
+                }
+                _ => {
+                    writeln!(f)?;
+                }
+            }
+        }
+        writeln!(f, "{:?}", self.constants)?;
+
+        Ok(())
+    }
+}
+
 impl AsRef<[u8]> for Bytecode {
     fn as_ref(&self) -> &[u8] {
         self.code.as_ref()
