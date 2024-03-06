@@ -1,6 +1,7 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Opcode {
     Constant,
+    Pop,
     Return,
     Add,
     Subtract,
@@ -16,13 +17,14 @@ impl TryFrom<u8> for Opcode {
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         let opcode = match value {
             0 => Self::Constant,
-            1 => Self::Return,
-            2 => Self::Add,
-            3 => Self::Subtract,
-            4 => Self::Multiply,
-            5 => Self::Divide,
-            6 => Self::Remainder,
-            7 => Self::Negate,
+            1 => Self::Pop,
+            2 => Self::Return,
+            3 => Self::Add,
+            4 => Self::Subtract,
+            5 => Self::Multiply,
+            6 => Self::Divide,
+            7 => Self::Remainder,
+            8 => Self::Negate,
             _ => return Err(()),
         };
 

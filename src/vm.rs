@@ -57,6 +57,9 @@ impl Vm {
                     let value = self.bytecode.constant(offset);
                     self.push(value)?;
                 }
+                Opcode::Pop => {
+                    self.pop()?;
+                }
                 Opcode::Return => {
                     break self.pop()?;
                 }

@@ -25,6 +25,7 @@ impl<'a> Lexer<'a> {
         let kind = match self.cursor.advance() {
             '(' => TokenKind::LParen,
             ')' => TokenKind::RParen,
+            ';' => TokenKind::Semicolon,
             '*' => TokenKind::Star,
             '/' => TokenKind::Slash,
             '%' => TokenKind::Percent,

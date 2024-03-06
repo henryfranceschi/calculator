@@ -1,5 +1,6 @@
 use crate::{
-    ast::{BinOp, BinOpKind, Expr, ExprKind, UnOp, UnOpKind},
+    ast::{BinOp, BinOpKind, Decl, Expr, ExprKind, Stmt, UnOp, UnOpKind, Ast},
+    diagnostics,
     lexer::{
         span::Span,
         token::{Token, TokenKind},
@@ -9,17 +10,20 @@ use crate::{
 
 #[derive(Debug)]
 pub struct Parser<'a> {
+    source: &'a str,
     lexer: Lexer<'a>,
     current: Token<'a>,
     previous: Token<'a>,
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(mut lexer: Lexer<'a>) -> Self {
+    pub fn new(source: &'a str) -> Self {
+        let mut lexer = Lexer::new(source);
         let current = report_errs_until_ok(&mut lexer);
         let previous = current.clone();
 
         Self {
+            source,
             lexer,
             current,
             previous,
@@ -43,11 +47,60 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse(&mut self) -> Result<Expr, ParseError> {
-        let expr = self.expr(0)?;
-        self.expect(TokenKind::Eof)?;
+    fn synchronize(&mut self) {
+        loop {
+            let token = &self.current;
+            if token.kind == TokenKind::Eof {
+                break;
+            }
 
-        Ok(expr)
+            match token.kind {
+                TokenKind::Semicolon => {
+                    self.advance();
+                    break;
+                }
+                // Tokens marking the begining of a declaration.
+                // TokenKind::Let | TokenKind::Func => break,
+                _ => {
+                    self.advance();
+                    continue;
+                }
+            }
+        }
+    }
+
+    pub fn parse(&mut self) -> Ast {
+        // Attempt to parse declarations, synchronize on failure.
+        let mut had_error = false;
+        let mut decls = vec![];
+        loop {
+            if self.current.kind == TokenKind::Eof {
+                break;
+            }
+
+            match self.decl() {
+                Ok(decl) => {
+                    decls.push(decl);
+                }
+                Err(err) => {
+                    had_error = true;
+                    diagnostics::report_error("syntax error", err.span, self.source);
+                    self.synchronize();
+                }
+            }
+        }
+
+        Ast::new(decls, !had_error)
+    }
+
+    fn decl(&mut self) -> Result<Decl, ParseError> {
+        Ok(Decl::stmt(self.stmt()?))
+    }
+
+    fn stmt(&mut self) -> Result<Stmt, ParseError> {
+        let expr = self.expr(0)?;
+        self.expect(TokenKind::Semicolon)?;
+        Ok(Stmt::expr(expr))
     }
 
     fn expr(&mut self, min_bp: u8) -> Result<Expr, ParseError> {

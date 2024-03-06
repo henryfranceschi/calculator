@@ -1,13 +1,29 @@
 use crate::{
-    ast::{BinOpKind, Expr, ExprKind, UnOpKind},
+    ast::{Ast, BinOpKind, Decl, DeclKind, Expr, ExprKind, Stmt, StmtKind, UnOpKind},
     bytecode::{Bytecode, Opcode},
 };
 
-pub fn generate(expr: &Expr) -> Bytecode {
+pub fn generate(ast: &Ast) -> Bytecode {
     let mut bytecode = Bytecode::default();
-    expr_generate(&mut bytecode, expr);
-    bytecode.write_opcode(Opcode::Return);
+    for decl in ast.decls() {
+        decl_generate(&mut bytecode, decl);
+    }
     bytecode
+}
+
+fn decl_generate(bytecode: &mut Bytecode, decl: &Decl) {
+    match decl.kind() {
+        DeclKind::Stmt(stmt) => stmt_generate(bytecode, stmt),
+    }
+}
+
+fn stmt_generate(bytecode: &mut Bytecode, stmt: &Stmt) {
+    match stmt.kind() {
+        StmtKind::Expr(expr) => {
+            expr_generate(bytecode, expr);
+            bytecode.write_opcode(Opcode::Pop);
+        }
+    }
 }
 
 fn expr_generate(bytecode: &mut Bytecode, expr: &Expr) {

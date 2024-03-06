@@ -12,6 +12,7 @@ pub struct Token<'a> {
 pub enum TokenKind {
     LParen,
     RParen,
+    Semicolon,
     Number,
     Plus,
     Minus,
