@@ -18,7 +18,7 @@ impl<'a> Lexer<'a> {
         Self { cursor: Cursor::new(source) }
     }
 
-    pub fn next_token(&mut self) -> Result<Token<'a>, LexError<'a>> {
+    pub fn next_token(&mut self) -> Result<Token<'a>, LexicalError<'a>> {
         self.cursor.advance_while(|c| c.is_ascii_whitespace());
         self.cursor.reset_start_index();
 
@@ -44,7 +44,7 @@ impl<'a> Lexer<'a> {
                 TokenKind::Number
             }
             Cursor::EOF_CHAR => TokenKind::Eof,
-            _ => return Err(self.error(LexErrorKind::Unexpected)),
+            _ => return Err(self.error(LexicalErrorKind::Unexpected)),
         };
 
         Ok(self.token(kind))
@@ -52,14 +52,14 @@ impl<'a> Lexer<'a> {
 
     fn token(&mut self, kind: TokenKind) -> Token<'a> {
         Token {
-            slice: self.cursor.slice(),
+            lexeme: self.cursor.slice(),
             span: self.cursor.reset_span(),
             kind,
         }
     }
 
-    fn error(&mut self, kind: LexErrorKind) -> LexError<'a> {
-        LexError {
+    fn error(&mut self, kind: LexicalErrorKind) -> LexicalError<'a> {
+        LexicalError {
             slice: self.cursor.slice(),
             span: self.cursor.reset_span(),
             kind,
@@ -68,14 +68,14 @@ impl<'a> Lexer<'a> {
 }
 
 #[derive(Debug)]
-pub struct LexError<'a> {
+pub struct LexicalError<'a> {
     slice: &'a str,
     span: Span,
-    kind: LexErrorKind,
+    kind: LexicalErrorKind,
 }
 
 #[derive(Debug)]
-enum LexErrorKind {
+enum LexicalErrorKind {
     UnterminatedString,
     Unexpected,
 }
@@ -84,10 +84,10 @@ enum LexErrorKind {
 mod test {
     use crate::lexer::token::TokenKind;
 
-    use super::{Lexer, LexError};
+    use super::{Lexer, LexicalError};
 
     #[test]
-    fn number() -> Result<(), LexError<'static>> {
+    fn number() -> Result<(), LexicalError<'static>> {
         let mut lexer = Lexer::new("3");
         assert_eq!(lexer.next_token()?.kind, TokenKind::Number);
         assert_eq!(lexer.next_token()?.kind, TokenKind::Eof);
@@ -100,7 +100,7 @@ mod test {
     }
 
     #[test]
-    fn unexpected() -> Result<(), LexError<'static>> {
+    fn unexpected() -> Result<(), LexicalError<'static>> {
         let mut lexer = Lexer::new("10 + #");
         assert_eq!(lexer.next_token()?.kind, TokenKind::Number);
         assert_eq!(lexer.next_token()?.kind, TokenKind::Plus);

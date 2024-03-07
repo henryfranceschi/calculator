@@ -2,8 +2,7 @@ use super::span::Span;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Token<'a> {
-    /// The slice of the source where the token is located.
-    pub slice: &'a str,
+    pub lexeme: &'a str,
     pub span: Span,
     pub kind: TokenKind,
 }

@@ -1,5 +1,5 @@
 use crate::{
-    ast::{BinOp, BinOpKind, Decl, Expr, ExprKind, Stmt, UnOp, UnOpKind, Ast},
+    ast::{Ast, BinOp, BinOpKind, Decl, Expr, ExprKind, Stmt, UnOp, UnOpKind},
     diagnostics,
     lexer::{
         span::Span,
@@ -35,14 +35,14 @@ impl<'a> Parser<'a> {
         self.previous = std::mem::replace(&mut self.current, token);
     }
 
-    fn expect(&mut self, kind: TokenKind) -> Result<(), ParseError> {
+    fn expect(&mut self, kind: TokenKind) -> Result<(), SyntacticError> {
         if self.current.kind == kind {
             self.advance();
             Ok(())
         } else {
-            Err(ParseError {
+            Err(SyntacticError {
                 span: self.current.span,
-                message: format!("expected {:?}", kind),
+                message: format!("expected {:?}, got {:?}", kind, self.current.kind),
             })
         }
     }
@@ -93,21 +93,21 @@ impl<'a> Parser<'a> {
         Ast::new(decls, !had_error)
     }
 
-    fn decl(&mut self) -> Result<Decl, ParseError> {
+    fn decl(&mut self) -> Result<Decl, SyntacticError> {
         Ok(Decl::stmt(self.stmt()?))
     }
 
-    fn stmt(&mut self) -> Result<Stmt, ParseError> {
+    fn stmt(&mut self) -> Result<Stmt, SyntacticError> {
         let expr = self.expr(0)?;
         self.expect(TokenKind::Semicolon)?;
         Ok(Stmt::expr(expr))
     }
 
-    fn expr(&mut self, min_bp: u8) -> Result<Expr, ParseError> {
+    fn expr(&mut self, min_bp: u8) -> Result<Expr, SyntacticError> {
         self.advance();
         let mut expr = match self.previous.kind {
             TokenKind::Number => {
-                let number = self.previous.slice.parse().unwrap();
+                let number = self.previous.lexeme.parse().unwrap();
                 Expr::new(self.previous.span, ExprKind::Number(number))
             }
             TokenKind::LParen => {
@@ -120,7 +120,7 @@ impl<'a> Parser<'a> {
                     let (_, r_bp) = prefix_binding_power(&op);
                     Expr::unary(op, self.expr(r_bp)?)
                 } else {
-                    return Err(ParseError {
+                    return Err(SyntacticError {
                         span: self.current.span,
                         message: "expected expression".to_owned(),
                     });
@@ -193,12 +193,12 @@ fn infix_binding_power(binop: &BinOp) -> (u8, u8) {
 }
 
 #[derive(Debug, Clone)]
-pub struct ParseError {
+pub struct SyntacticError {
     span: Span,
     message: String,
 }
 
-impl ParseError {
+impl SyntacticError {
     pub fn span(&self) -> Span {
         self.span
     }
