@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use super::span::Span;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -43,6 +45,10 @@ impl Display for TokenKind {
             TokenKind::Eof => "<eof>",
         };
 
-        f.write_str(s)
+        if !self.is_uniform() || *self == Self::Eof {
+            write!(f, "{}", s)
+        } else {
+            write!(f, "'{}'", s)
+        }
     }
 }
