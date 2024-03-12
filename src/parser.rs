@@ -1,10 +1,10 @@
 use crate::{
     ast::{Ast, BinOp, BinOpKind, Decl, Expr, ExprKind, Stmt, UnOp, UnOpKind},
-    diagnostics,
+    diagnostics::report_error,
     lexer::{
         span::Span,
         token::{Token, TokenKind},
-        Lexer,
+        Lexer, LexicalError,
     },
 };
 
@@ -18,51 +18,60 @@ pub struct Parser<'a> {
 
 impl<'a> Parser<'a> {
     pub fn new(source: &'a str) -> Self {
-        let mut lexer = Lexer::new(source);
-        let current = report_errs_until_ok(&mut lexer);
-        let previous = current.clone();
-
-        Self {
+        let mut parser = Self {
             source,
-            lexer,
-            current,
-            previous,
+            lexer: Lexer::new(source),
+            current: Token::dummy(),
+            previous: Token::dummy(),
+        };
+
+        // We need to advance.
+        if parser.advance().is_err() {
+            parser.synchronize();
         }
+
+        parser
     }
 
-    fn advance(&mut self) {
-        let token = report_errs_until_ok(&mut self.lexer);
+    fn advance(&mut self) -> Result<(), LexicalError> {
+        let token = self.lexer.next_token()?;
         self.previous = std::mem::replace(&mut self.current, token);
+        Ok(())
     }
 
-    fn expect(&mut self, kind: TokenKind) -> Result<(), SyntacticError> {
+    fn expect(&mut self, kind: TokenKind) -> Result<(), ParseError> {
         if self.current.kind == kind {
-            self.advance();
+            self.advance()?;
             Ok(())
         } else {
-            Err(SyntacticError {
+            Err(ParseError::SyntacticError(SyntacticError {
                 span: self.current.span,
-                message: format!("expected {:?}, got {:?}", kind, self.current.kind),
-            })
+                message: format!("expected {}, got {}", kind, self.current.kind),
+            }))
         }
     }
 
     fn synchronize(&mut self) {
-        loop {
-            let token = &self.current;
-            if token.kind == TokenKind::Eof {
-                break;
-            }
-
-            match token.kind {
+        while self.current.kind != TokenKind::Eof {
+            match self.current.kind {
                 TokenKind::Semicolon => {
-                    self.advance();
-                    break;
+                    // If advance fails here need continue discarding until we reach the next
+                    // declaration.
+                    match self.advance() {
+                        Ok(()) => break,
+                        Err(err) => {
+                            // Report error.
+                            report_error("lexical error", err.span, self.source);
+                            continue;
+                        }
+                    }
                 }
                 // Tokens marking the begining of a declaration.
                 // TokenKind::Let | TokenKind::Func => break,
                 _ => {
-                    self.advance();
+                    if let Err(err) = self.advance() {
+                        report_error("lexical error", err.span, self.source);
+                    }
                     continue;
                 }
             }
@@ -73,18 +82,21 @@ impl<'a> Parser<'a> {
         // Attempt to parse declarations, synchronize on failure.
         let mut had_error = false;
         let mut decls = vec![];
-        loop {
-            if self.current.kind == TokenKind::Eof {
-                break;
-            }
-
+        while self.current.kind != TokenKind::Eof {
             match self.decl() {
                 Ok(decl) => {
                     decls.push(decl);
                 }
                 Err(err) => {
                     had_error = true;
-                    diagnostics::report_error("syntax error", err.span, self.source);
+                    match err {
+                        ParseError::LexicalError(err) => {
+                            report_error("lexical error", err.span, self.source);
+                        }
+                        ParseError::SyntacticError(err) => {
+                            report_error(&err.message, err.span, self.source);
+                        }
+                    }
                     self.synchronize();
                 }
             }
@@ -93,18 +105,18 @@ impl<'a> Parser<'a> {
         Ast::new(decls, !had_error)
     }
 
-    fn decl(&mut self) -> Result<Decl, SyntacticError> {
+    fn decl(&mut self) -> Result<Decl, ParseError> {
         Ok(Decl::stmt(self.stmt()?))
     }
 
-    fn stmt(&mut self) -> Result<Stmt, SyntacticError> {
+    fn stmt(&mut self) -> Result<Stmt, ParseError> {
         let expr = self.expr(0)?;
         self.expect(TokenKind::Semicolon)?;
         Ok(Stmt::expr(expr))
     }
 
-    fn expr(&mut self, min_bp: u8) -> Result<Expr, SyntacticError> {
-        self.advance();
+    fn expr(&mut self, min_bp: u8) -> Result<Expr, ParseError> {
+        self.advance()?;
         let mut expr = match self.previous.kind {
             TokenKind::Number => {
                 let number = self.previous.lexeme.parse().unwrap();
@@ -123,7 +135,8 @@ impl<'a> Parser<'a> {
                     return Err(SyntacticError {
                         span: self.current.span,
                         message: "expected expression".to_owned(),
-                    });
+                    }
+                    .into());
                 }
             }
         };
@@ -135,7 +148,7 @@ impl<'a> Parser<'a> {
                     break;
                 }
 
-                self.advance();
+                self.advance()?;
                 expr = Expr::binary(op, expr, self.expr(r_bp)?);
                 continue;
             }
@@ -144,16 +157,6 @@ impl<'a> Parser<'a> {
         }
 
         Ok(expr)
-    }
-}
-
-fn report_errs_until_ok<'a>(lexer: &mut Lexer<'a>) -> Token<'a> {
-    loop {
-        let result = lexer.next_token();
-        match result {
-            Ok(token) => break token,
-            Err(err) => eprintln!("lexical error: {err:?}"),
-        }
     }
 }
 
@@ -192,18 +195,25 @@ fn infix_binding_power(binop: &BinOp) -> (u8, u8) {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct SyntacticError {
-    span: Span,
-    message: String,
+pub enum ParseError {
+    LexicalError(LexicalError),
+    SyntacticError(SyntacticError),
 }
 
-impl SyntacticError {
-    pub fn span(&self) -> Span {
-        self.span
+impl From<LexicalError> for ParseError {
+    fn from(value: LexicalError) -> Self {
+        ParseError::LexicalError(value)
     }
+}
 
-    pub fn message(&self) -> &str {
-        &self.message
+impl From<SyntacticError> for ParseError {
+    fn from(value: SyntacticError) -> Self {
+        ParseError::SyntacticError(value)
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct SyntacticError {
+    pub span: Span,
+    pub message: String,
 }

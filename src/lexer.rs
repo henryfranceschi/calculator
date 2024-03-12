@@ -18,7 +18,7 @@ impl<'a> Lexer<'a> {
         Self { cursor: Cursor::new(source) }
     }
 
-    pub fn next_token(&mut self) -> Result<Token<'a>, LexicalError<'a>> {
+    pub fn next_token(&mut self) -> Result<Token<'a>, LexicalError> {
         self.cursor.advance_while(|c| c.is_ascii_whitespace());
         self.cursor.reset_start_index();
 
@@ -58,9 +58,8 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn error(&mut self, kind: LexicalErrorKind) -> LexicalError<'a> {
+    fn error(&mut self, kind: LexicalErrorKind) -> LexicalError {
         LexicalError {
-            slice: self.cursor.slice(),
             span: self.cursor.reset_span(),
             kind,
         }
@@ -68,14 +67,13 @@ impl<'a> Lexer<'a> {
 }
 
 #[derive(Debug)]
-pub struct LexicalError<'a> {
-    slice: &'a str,
-    span: Span,
-    kind: LexicalErrorKind,
+pub struct LexicalError {
+    pub span: Span,
+    pub kind: LexicalErrorKind,
 }
 
 #[derive(Debug)]
-enum LexicalErrorKind {
+pub enum LexicalErrorKind {
     UnterminatedString,
     Unexpected,
 }
@@ -87,7 +85,7 @@ mod test {
     use super::{Lexer, LexicalError};
 
     #[test]
-    fn number() -> Result<(), LexicalError<'static>> {
+    fn number() -> Result<(), LexicalError> {
         let mut lexer = Lexer::new("3");
         assert_eq!(lexer.next_token()?.kind, TokenKind::Number);
         assert_eq!(lexer.next_token()?.kind, TokenKind::Eof);
@@ -100,7 +98,7 @@ mod test {
     }
 
     #[test]
-    fn unexpected() -> Result<(), LexicalError<'static>> {
+    fn unexpected() -> Result<(), LexicalError> {
         let mut lexer = Lexer::new("10 + #");
         assert_eq!(lexer.next_token()?.kind, TokenKind::Number);
         assert_eq!(lexer.next_token()?.kind, TokenKind::Plus);
