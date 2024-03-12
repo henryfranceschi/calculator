@@ -6,18 +6,17 @@ pub fn report_error(message: &str, span: Span, source: &str) {
     let margin_width = 3 + digit_count(line as u32) + digit_count(column as u32);
 
     eprintln!("error: {message}");
-
-    if let Some(src_line) = source.lines().nth(line - 1) {
+    if !span.is_empty() {
+        let src_line = source.lines().nth(line - 1).expect("invalid line");
         eprintln!("[{}:{}] {}", line, column, src_line);
         eprintln!(
             "{} {}",
-            str::repeat(" ", margin_width as usize + column),
+            str::repeat(" ", margin_width as usize + (column - 1)),
             str::repeat("^", span.len()),
         );
-    }
-    // The only kind of token that has an empty span is eof which is always the last token
-    // yielded by the lexer.
-    else {
+    } else {
+        // The only kind of token that has an empty span is eof which is always the last token
+        // yielded by the lexer.
         eprintln!("[eof]");
     }
 }
