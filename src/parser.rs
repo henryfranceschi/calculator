@@ -14,6 +14,7 @@ pub struct Parser<'a> {
     lexer: Lexer<'a>,
     current: Token<'a>,
     previous: Token<'a>,
+    had_error: bool,
 }
 
 impl<'a> Parser<'a> {
@@ -23,10 +24,12 @@ impl<'a> Parser<'a> {
             lexer: Lexer::new(source),
             current: Token::dummy(),
             previous: Token::dummy(),
+            had_error: false,
         };
 
-        // We need to advance.
+        // For the parser to be in a valid state we need to advance here.
         if parser.advance().is_err() {
+            parser.had_error = true;
             parser.synchronize();
         }
 
@@ -80,7 +83,6 @@ impl<'a> Parser<'a> {
 
     pub fn parse(&mut self) -> Ast {
         // Attempt to parse declarations, synchronize on failure.
-        let mut had_error = false;
         let mut decls = vec![];
         while self.current.kind != TokenKind::Eof {
             match self.decl() {
@@ -88,7 +90,7 @@ impl<'a> Parser<'a> {
                     decls.push(decl);
                 }
                 Err(err) => {
-                    had_error = true;
+                    self.had_error = true;
                     match err {
                         ParseError::LexicalError(err) => {
                             report_error("lexical error", err.span, self.source);
@@ -102,7 +104,7 @@ impl<'a> Parser<'a> {
             }
         }
 
-        Ast::new(decls, !had_error)
+        Ast::new(decls, !self.had_error)
     }
 
     fn decl(&mut self) -> Result<Decl, ParseError> {
