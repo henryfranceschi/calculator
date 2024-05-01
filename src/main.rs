@@ -1,4 +1,4 @@
-use calculator::{codegen, parser::Parser, vm::Vm};
+use calculator::{codegen::CodeGenerator, parser::Parser, vm::Vm};
 
 fn main() {
     let args: Vec<_> = std::env::args().collect();
@@ -11,7 +11,8 @@ fn main() {
     let mut parser = Parser::new(source);
     let ast = parser.parse();
     if ast.complete() {
-        let mut vm = Vm::new(codegen::generate(&ast));
+        let bytecode = CodeGenerator::default().generate(&ast);
+        let mut vm = Vm::new(bytecode);
         match vm.run() {
             Ok(value) => println!("{}", value),
             Err(err) => eprintln!("runtime error: {:?}", err),
